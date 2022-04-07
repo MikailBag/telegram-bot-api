@@ -78,6 +78,8 @@ class WebhookActor final : public td::HttpOutboundConnection::Callback {
   std::size_t last_pending_update_count_ = MIN_PENDING_UPDATES_WARNING;
   td::HttpUrl url_;
   td::string cert_path_;
+  // if non-empty, will be used to derive HMAC signature for outgoing requests.
+  td::string client_secret_;
   std::shared_ptr<const ClientParameters> parameters_;
 
   double last_error_time_ = 0;

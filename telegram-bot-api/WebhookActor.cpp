@@ -20,6 +20,7 @@
 #include "td/utils/base64.h"
 #include "td/utils/buffer.h"
 #include "td/utils/common.h"
+#include "td/utils/crypto.h"
 #include "td/utils/format.h"
 #include "td/utils/JsonBuilder.h"
 #include "td/utils/logging.h"
@@ -41,13 +42,14 @@ static int VERBOSITY_NAME(webhook) = VERBOSITY_NAME(DEBUG);
 std::atomic<td::uint64> WebhookActor::total_connections_count_{0};
 
 WebhookActor::WebhookActor(td::ActorShared<Callback> callback, td::int64 tqueue_id, td::HttpUrl url,
-                           td::string cert_path, td::int32 max_connections, bool from_db_flag,
-                           td::string cached_ip_address, bool fix_ip_address,
+                           td::string cert_path, td::string client_secret, td::int32 max_connections,
+                           bool from_db_flag, td::string cached_ip_address, bool fix_ip_address,
                            std::shared_ptr<const ClientParameters> parameters)
     : callback_(std::move(callback))
     , tqueue_id_(tqueue_id)
     , url_(std::move(url))
     , cert_path_(std::move(cert_path))
+    , client_secret_(std::move(client_secret))
     , parameters_(std::move(parameters))
     , fix_ip_address_(fix_ip_address)
     , from_db_flag_(from_db_flag)
@@ -527,6 +529,14 @@ td::Status WebhookActor::send_update() {
   hc.add_header("Host", url_.host_);
   if (!url_.userinfo_.empty()) {
     hc.add_header("Authorization", PSLICE() << "Basic " << td::base64_encode(url_.userinfo_));
+  }
+  if (client_secret_.size() > 0) {
+    td::string signature;
+    signature.resize(256 / 8);
+    td::hmac_sha256(client_secret_, body, signature);
+    td::string signature_base64 = td::base64_encode(signature);
+
+    hc.add_header("X-Telegram-Signature", signature_base64);
   }
   hc.set_content_type("application/json");
   hc.set_content_size(body.size());

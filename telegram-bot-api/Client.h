@@ -962,6 +962,7 @@ class Client final : public WebhookActor::Callback {
   td::ActorOwn<WebhookActor> webhook_id_;
   PromisedQueryPtr webhook_set_query_;
   td::string webhook_url_;
+  td::string client_secret_;
   double webhook_set_time_ = 0;
   int32 webhook_max_connections_ = 0;
   td::string webhook_ip_address_;

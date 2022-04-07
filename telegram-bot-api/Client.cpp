@@ -8193,6 +8193,7 @@ void Client::do_set_webhook(PromisedQueryPtr query, bool was_deleted) {
     webhook_set_time_ = td::Time::now();
     webhook_max_connections_ = get_webhook_max_connections(query.get());
     webhook_ip_address_ = query->arg("ip_address").str();
+    client_secret_ = query->arg("client_secret").str();
     webhook_fix_ip_address_ = get_webhook_fix_ip_address(query.get());
     last_webhook_error_date_ = 0;
     last_webhook_error_ = Status::OK();
@@ -8203,7 +8204,7 @@ void Client::do_set_webhook(PromisedQueryPtr query, bool was_deleted) {
     auto webhook_actor_name = PSTRING() << "Webhook " << url.ok();
     webhook_id_ = td::create_actor<WebhookActor>(
         webhook_actor_name, actor_shared(this, webhook_generation_), tqueue_id_, url.move_as_ok(),
-        has_webhook_certificate_ ? get_webhook_certificate_path() : "", webhook_max_connections_, query->is_internal(),
+        has_webhook_certificate_ ? get_webhook_certificate_path() : "", client_secret_, webhook_max_connections_, query->is_internal(),
         webhook_ip_address_, webhook_fix_ip_address_, parameters_);
     // wait for webhook verified or webhook callback
     webhook_query_type_ = WebhookQueryType::Verify;
